@@ -2,7 +2,7 @@
 
 A tool for creating shareable countdown pages — for a wedding, a launch, a deadline, a birthday, anything with a date attached. No signup, no app, no backend. The event data lives entirely in the link.
 
-**[Live demo →](https://countdownly-liard.vercel.app/)**
+**[Live demo](https://countdownly-liard.vercel.app/)**
 
 ## What it does
 
