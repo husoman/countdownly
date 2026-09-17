@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Dependencies (in case you add tooling later)
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# Deployment
+.vercel/
+.netlify/

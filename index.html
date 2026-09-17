@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countdownly — create a shareable countdown</title>
+<meta name="description" content="Create a beautiful shareable countdown page for any event — no signup, no backend, just a link.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12101B;
+    --bg-2:#1B1830;
+    --surface:#211D38;
+    --text:#F2EFEA;
+    --text-dim:#A79FC0;
+    --coral:#FF6B6B;
+    --gold:#FFD166;
+    --line:#332D50;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; min-height:100%; }
+  body{
+    background:radial-gradient(ellipse at top, var(--bg-2) 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:48px 24px 80px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- shared header ---------- */
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:var(--text);
+    margin-bottom:auto;
+  }
+  .brand svg{ display:block; }
+  .brand span{
+    font-weight:600;
+    font-size:15px;
+  }
+
+  /* ---------- CREATE VIEW ---------- */
+  #create-view{ flex:1; display:flex; flex-direction:column; }
+  .hero{ margin:40px 0 32px; }
+  .hero h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(32px, 6vw, 46px);
+    line-height:1.1;
+    margin:0 0 12px;
+    letter-spacing:-0.01em;
+  }
+  .hero h1 em{
+    font-style:italic;
+    color:var(--coral);
+  }
+  .hero p{
+    color:var(--text-dim);
+    font-size:16px;
+    margin:0;
+    max-width:44ch;
+  }
+
+  form.card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--text-dim);
+    font-weight:500;
+    margin-bottom:6px;
+  }
+  .field input[type="text"],
+  .field input[type="datetime-local"]{
+    width:100%;
+    background:var(--bg);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 14px;
+    font-family:inherit;
+    font-size:15px;
+  }
+  .field input:focus{ outline:none; border-color:var(--coral); }
+
+  .emoji-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .emoji-row button{
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:20px;
+    padding:8px 12px;
+    cursor:pointer;
+    transition:border-color 0.15s, transform 0.1s;
+  }
+  .emoji-row button.selected{
+    border-color:var(--gold);
+    background:var(--bg-2);
+  }
+  .emoji-row button:hover{ transform:translateY(-1px); }
+
+  .create-btn{
+    background:linear-gradient(135deg, var(--coral), #ff8f6b);
+    color:#1a0f0f;
+    border:none;
+    border-radius:10px;
+    padding:14px 20px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:filter 0.15s;
+  }
+  .create-btn:hover{ filter:brightness(1.05); }
+  .create-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .err{ color:var(--coral); font-size:13px; display:none; }
+
+  footer{
+    color:var(--text-dim);
+    font-size:12px;
+    text-align:center;
+    margin-top:40px;
+  }
+  footer a{ color:var(--text-dim); }
+
+  /* ---------- COUNTDOWN VIEW ---------- */
+  #countdown-view{
+    display:none;
+    flex:1;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    gap:28px;
+  }
+  #countdown-view.active{ display:flex; }
+  .cd-emoji{ font-size:48px; }
+  .cd-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(24px, 5vw, 34px);
+    max-width:24ch;
+    line-height:1.2;
+    margin:0;
+  }
+  .cd-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    width:100%;
+  }
+  .cd-unit{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 8px;
+  }
+  .cd-num{
+    font-family:'Fraunces', serif;
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    font-size:clamp(28px, 6vw, 40px);
+    color:var(--gold);
+    line-height:1;
+  }
+  .cd-label{
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:6px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .cd-date{
+    color:var(--text-dim);
+    font-size:14px;
+  }
+  .cd-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .cd-actions button, .cd-actions a{
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:inherit;
+    font-size:13px;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    text-decoration:none;
+    transition:border-color 0.15s;
+  }
+  .cd-actions button:hover, .cd-actions a:hover{ border-color:var(--gold); }
+  .cd-actions button.copied{ border-color:var(--gold); color:var(--gold); }
+
+  .cd-done{
+    font-family:'Fraunces', serif;
+    font-size:clamp(26px, 6vw, 38px);
+    color:var(--gold);
+  }
+
+  /* confetti */
+  .confetti{
+    position:fixed;
+    top:-10px;
+    width:8px;
+    height:14px;
+    opacity:0.9;
+    animation:fall linear forwards;
+    pointer-events:none;
+    z-index:5;
+  }
+  @keyframes fall{
+    to{ transform:translateY(110vh) rotate(360deg); opacity:0.3; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="brand" id="brand-link">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="#FF6B6B" stroke-width="2"/>
+      <circle cx="12" cy="12" r="3" fill="#FFD166"/>
+    </svg>
+    <span>Countdownly</span>
+  </a>
+
+  <!-- CREATE VIEW -->
+  <div id="create-view">
+    <div class="hero">
+      <h1>Count down to <em>anything</em>.</h1>
+      <p>Type an event and a date, get a link. Share it — no signup, no app, nothing to install.</p>
+    </div>
+
+    <form class="card" id="create-form">
+      <div class="field">
+        <label for="title-input">What's the event?</label>
+        <input type="text" id="title-input" maxlength="60" placeholder="Our wedding day" required>
+      </div>
+
+      <div class="field">
+        <label>Pick an icon</label>
+        <div class="emoji-row" id="emoji-row">
+          <button type="button" data-emoji="🎉" class="selected">🎉</button>
+          <button type="button" data-emoji="💍">💍</button>
+          <button type="button" data-emoji="🚀">🚀</button>
+          <button type="button" data-emoji="🎂">🎂</button>
+          <button type="button" data-emoji="✈️">✈️</button>
+          <button type="button" data-emoji="🎓">🎓</button>
+          <button type="button" data-emoji="📅">📅</button>
+          <button type="button" data-emoji="🏆">🏆</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="date-input">When?</label>
+        <input type="datetime-local" id="date-input" required>
+      </div>
+
+      <div class="err" id="form-err">Pick a date/time first.</div>
+
+      <button type="submit" class="create-btn">Create my countdown</button>
+    </form>
+
+    <footer>
+      Your event data lives entirely in the link — nothing is stored on a server.
+    </footer>
+  </div>
+
+  <!-- COUNTDOWN VIEW -->
+  <div id="countdown-view">
+    <div class="cd-emoji" id="cd-emoji">🎉</div>
+    <h1 class="cd-title" id="cd-title">Event title</h1>
+    <div class="cd-date" id="cd-date"></div>
+
+    <div class="cd-grid" id="cd-grid">
+      <div class="cd-unit"><div class="cd-num" id="num-days">00</div><div class="cd-label">Days</div></div>
+      <div class="cd-unit"><div class="cd-num" id="num-hours">00</div><div class="cd-label">Hours</div></div>
+      <div class="cd-unit"><div class="cd-num" id="num-minutes">00</div><div class="cd-label">Minutes</div></div>
+      <div class="cd-unit"><div class="cd-num" id="num-seconds">00</div><div class="cd-label">Seconds</div></div>
+    </div>
+
+    <div class="cd-done" id="cd-done" style="display:none;">It's here! 🎊</div>
+
+    <div class="cd-actions">
+      <button id="copy-link-btn">Copy link</button>
+      <button id="share-btn" style="display:none;">Share</button>
+      <a href="/" id="new-countdown-link">Create your own →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const createView = document.getElementById('create-view');
+  const countdownView = document.getElementById('countdown-view');
+  const params = new URLSearchParams(window.location.search);
+
+  function basePath(){
+    // strips query/hash, keeps just the path, for "create your own" links
+    return window.location.origin + window.location.pathname;
+  }
+  document.getElementById('brand-link').href = basePath();
+  document.getElementById('new-countdown-link').href = basePath();
+
+  const t = params.get('t');
+  const d = params.get('d');
+  const e = params.get('e');
+
+  if (t && d) {
+    renderCountdown(t, d, e || '🎉');
+  } else {
+    renderCreateForm();
+  }
+
+  function renderCreateForm(){
+    createView.style.display = 'flex';
+    countdownView.classList.remove('active');
+
+    const emojiRow = document.getElementById('emoji-row');
+    let selectedEmoji = '🎉';
+    emojiRow.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button');
+      if (!btn) return;
+      emojiRow.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedEmoji = btn.dataset.emoji;
+    });
+
+    // default the date picker to 1 week from now, rounded to the hour
+    const dateInput = document.getElementById('date-input');
+    const def = new Date();
+    def.setDate(def.getDate() + 7);
+    def.setMinutes(0,0,0);
+    const pad = n => String(n).padStart(2,'0');
+    dateInput.value = `${def.getFullYear()}-${pad(def.getMonth()+1)}-${pad(def.getDate())}T${pad(def.getHours())}:00`;
+
+    document.getElementById('create-form').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const title = document.getElementById('title-input').value.trim();
+      const dateVal = dateInput.value;
+      const errEl = document.getElementById('form-err');
+      if (!title || !dateVal) {
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      const iso = new Date(dateVal).toISOString();
+      const url = new URL(basePath());
+      url.searchParams.set('t', title);
+      url.searchParams.set('d', iso);
+      url.searchParams.set('e', selectedEmoji);
+      window.location.href = url.toString();
+    });
+  }
+
+  function renderCountdown(title, isoDate, emoji){
+    createView.style.display = 'none';
+    countdownView.classList.add('active');
+
+    document.title = `${title} — Countdownly`;
+    document.getElementById('cd-title').textContent = title;
+    document.getElementById('cd-emoji').textContent = emoji;
+
+    const target = new Date(isoDate);
+    if (isNaN(target.getTime())) {
+      document.getElementById('cd-title').textContent = 'Invalid date in this link';
+      document.getElementById('cd-grid').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('cd-date').textContent = target.toLocaleString(undefined, {
+      weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+    });
+
+    const numDays = document.getElementById('num-days');
+    const numHours = document.getElementById('num-hours');
+    const numMinutes = document.getElementById('num-minutes');
+    const numSeconds = document.getElementById('num-seconds');
+    const grid = document.getElementById('cd-grid');
+    const doneEl = document.getElementById('cd-done');
+
+    let finished = false;
+    function tick(){
+      const now = new Date();
+      let diff = target - now;
+      if (diff <= 0) {
+        if (!finished) {
+          finished = true;
+          grid.style.display = 'none';
+          doneEl.style.display = 'block';
+          launchConfetti();
+        }
+        return;
+      }
+      const totalSeconds = Math.floor(diff / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      numDays.textContent = String(days).padStart(2,'0');
+      numHours.textContent = String(hours).padStart(2,'0');
+      numMinutes.textContent = String(minutes).padStart(2,'0');
+      numSeconds.textContent = String(seconds).padStart(2,'0');
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    // actions
+    const copyBtn = document.getElementById('copy-link-btn');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copied');
+        setTimeout(() => { copyBtn.textContent = 'Copy link'; copyBtn.classList.remove('copied'); }, 1400);
+      });
+    });
+
+    const shareBtn = document.getElementById('share-btn');
+    if (navigator.share) {
+      shareBtn.style.display = 'inline-block';
+      shareBtn.addEventListener('click', () => {
+        navigator.share({
+          title: `${title} — Countdownly`,
+          text: `Counting down to ${title}`,
+          url: window.location.href
+        }).catch(() => {});
+      });
+    }
+  }
+
+  function launchConfetti(){
+    const colors = ['#FF6B6B', '#FFD166', '#F2EFEA'];
+    for (let i=0; i<60; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.left = Math.random()*100 + 'vw';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.animationDuration = (2 + Math.random()*2) + 's';
+      el.style.animationDelay = (Math.random()*1.5) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+})();
+</script>
+</body>
+</html>
